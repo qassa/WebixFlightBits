@@ -16,7 +16,6 @@ function Navigator() {
                 route = "Flight";
                 break;
         }
-        (new View()).destroyView();
         routes[route].render();
     }
 }

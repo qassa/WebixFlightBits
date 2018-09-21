@@ -1,92 +1,63 @@
 function TableView(modal, detail) {
-    marked = [];
+    let marked = [];
     this.modal;
-    that = {};
+    let that = {};
     //that означает, что функцияи вызываются с изменынным контекстом this 
     that.controller;
     that.detail;
-    var that = {};
     that.table = undefined;
-    this.tr1;
+    let records = {};
+    let insertTable = "table";
+    let insertTools = "tools";
+
+    tools = [{
+        id: "add",
+        label: "Добавить",
+        image: path + "add.png",
+        click: ("$$('my_win').show();"),
+    }, {
+        id: "edit",
+        label: "Изменить",
+        image: path + "edit.png",
+    }, {
+        id: "remove",
+        label: "Удалить",
+        image: path + "remove.png",
+    }]
 
     function initTools() {
-        $$("add").attachEvent("click", function() {
-            this.modal.fillModal;
-        })
+        //отображение элементов с webix
 
-        $$("edit").attachEvent("click", function() {
-            this.modal.fillModal;
-        })
+        renderObj = {
+            cols: []
+        };
 
-        $$("remove").attachEvent("click", function() {
-            deleteRecs;
-        })
-    }
-
-    var tr = function(table) {
-        trr = document.createElement("tr");
-        that.table.appendChild(trr);
-        return trr;
-        //tag1.addEventListener("click", highlightRow);
+        cols = renderObj["cols"];
+        for (var elem in tools) {
+            cols.push({});
+            col = cols[elem];
+            element = tools[elem];
+            Object.keys(element).forEach(function(prop, idx, array) {
+                col[prop] = element[prop]
+            });
+            col.view = "button";
+            col.type = "image";
+            col.height = 40;
+            col.width = 150;
+        }
+        renderObj["cols"].push({});
+        renderObj["cols"].push({
+            view: "search"
+        });
+        webix.ui(renderObj, $$(insertTools));
     }
 
     trSelected = function() {
-        id = this.getAttribute("id");
-        if (lastSelect != -1) {
-            table = byId("records_table", document);
-            select = byId(lastSelect, table);
-            if (select != undefined)
-                select.style.background = 'none';
-        }
-        //обновление, highlight строки
-        this.style.background = '#FFFFD5';
-        lastSelect = id;
-
-        //запись значений во временный объект
-        keys = that.controller.getDataKeys();
-
-        sel_obj = {};
-        tr_h = byId("table_container")
-        tr_h = byId("0");
-        for (var child of tr_h.childNodes) {
-            attrib = child.getAttribute("class");
-            if (attrib != undefined) {
-                begin = attrib.indexOf("_data");
-                field = attrib.substring(0, attrib.length - (attrib.length - begin));
-                //sel_obj[field] = this.childNodes[child].innerText;
-            } else {
-                sel_obj["id"] = this.getAttribute("id");
-            }
-        }
+        let item = $$(insertTable).getSelectedItem();
+        lastSelect = item["id_table"];
 
         //обновление детального просмотра (если имеется)
-        if (that.detail != undefined) {
-            that.detail.updateDetail(gattr(this, "id"));
-        }
-    }
-
-    this.newHighlightTr = function() {
-        //перенос указателя строки
-        this.tr1 = tr(that.table);
-        //обработчик нажатия на строку с данными
-        this.tr1.addEventListener('click', trSelected);
-    }
-
-    function initHeader() {
-        //запись новой строки в таблицу
-        this.tr1 = tr(that.table);
-        this.tr1.setAttribute("id", "0");
-        //отличается запись для первой колонки (checkbox)
-        th_td("th", this.tr1, undefined, "input", undefined, "checkbox", "select_all");
-        keys = that.controller.getDataKeys();
-        for (var key in keys) {
-            name_ = that.controller.getFieldName(key);
-            if (name_ != "id") {
-                th = th_td("th", this.tr1, name_);
-                th.setAttribute("class", key + "_data");
-            }
-        }
-        //tr1 = tr(that.table);
+        that.detail.updateDetail(lastSelect);
     }
 
     this.initRecords = function() {
@@ -95,37 +66,26 @@ function TableView(modal, detail) {
 
         //перебор всех записей
         for (var elem of records) {
-            this.newHighlightTr();
-
-            this.addRecord(elem, this.tr1);
+            this.addRecord(elem);
         }
     }
 
-    this.addRecord = function(elem, tr1) {
-        //колонка с id всегда первая, найти id
-        //без id выполнить вставку невозможно (далее будет невозможно обратиться к записи)
-        elem_id = elem["id"];
-        if (elem_id == undefined)
-            throw new Error("id объекта не может отсутствовать");
-        else {
-            th_td("td", tr1, undefined, "input", undefined, "checkbox", "select_single", elem_id.value);
-        }
-        delete elem["id"];
-
+    this.addRecord = function(elem) {
+        //создать объект на основе ключей
+        record_obj = {};
         for (var key in elem) {
-            if (elem[key].type == "text" || elem[key].type == "numeric")
-                th_td("td", tr1, elem[key].value);
+            if (key == "id")
+                record_obj[key + "_table"] = elem[key].value;
             else
-            //отличается запись для preview
-            if (elem[key].type == "image")
-                th_td("td", tr1, undefined, "img", elem[key].value);
+                record_obj[key + "_data"] = elem[key].value;
         }
+        //добавить строку в DataTable
+        $$(insertTable).add(record_obj);
     }
 
     this.updateRecord = function(record) {
         //найти запись с заданным id
         id = record.id.value.toString();
-        //tr = document.querySelector('#records_table #' + id);
         tr = document.getElementById(id);
 
         //повторно вставить в то же место документа новую строку
@@ -142,53 +102,75 @@ function TableView(modal, detail) {
 
     var simulateClick = function(elem) {
         // Create our event (with options)
-        var evt = new MouseEvent('click', {
-            bubbles: false,
-            cancelable: true,
-            view: window
-        });
+        //var evt = new MouseEvent('click', {
+        //    bubbles: false,
+        //    cancelable: true,
+        //    view: window
+        //);
         // If cancelled, don't dispatch our event
-        var canceled = !elem.dispatchEvent(evt);
+        //var canceled = !elem.dispatchEvent(evt);
     };
 
-    function th_td(table_tag, tr, html, tag, src, type, name, id) {
-        var th = document.createElement(table_tag);
-
-        if (id != undefined)
-            tr.setAttribute("id", id);
-
-        if (tag != undefined) {
-            tag1 = create(tag, th);
-            if (src != undefined)
-                tag1.setAttribute("src", "resource/" + src + ".jpg");
-            if (type != undefined)
-                tag1.setAttribute("type", type);
-            if (name != undefined)
-                tag1.setAttribute("name", name);
-
-            if (html != undefined)
-                tag1.innerHTML = html;
-
-            //обработчик нажатия на checkbox
-            if (type == "checkbox") {
-                if (name == "select_all")
-                    tag1.addEventListener("change", markRecords);
-                if (name == "select_single")
-                    tag1.addEventListener("change", markRecord);
-            }
-        } else
-        if (html != undefined)
-            th.innerHTML = html;
-        tr.appendChild(th);
-        return th;
-    }
-
     this.initTableContent = function() {
-        if (that.table == undefined) {
-            that.table = create("table", byId("table_container"), true).attr("id", "records_table");
-        }
-        //заполнение внутренней таблицы из БД / заглушки
-        initHeader();
+        //заполнить таблицу элементом tableview
+        webix.ui({
+                view: "datatable",
+                id: "table",
+                select: "row",
+                resizeColumn: true,
+                on: {
+                    onSelectChange: trSelected
+                },
+                columns: [{
+                    id: "id_table",
+                    header: { content: "masterCheckbox", contentId: "id1" },
+                    template: "{common.checkbox()}",
+                    width: 50
+                }, {
+                    id: "number_data",
+                    header: "№",
+                    //width: 150
+                }, {
+                    id: "type_vs_data",
+                    header: "Тип воздушного судна",
+                    width: 170
+                }, {
+                    id: "preview_data",
+                    template: "<img src='resource/#preview_data#.jpg' style='width:35px'/>",
+                    header: "Превью",
+                    width: 170
+                }, {
+                    id: "techstate_data",
+                    header: "Техническое состояние",
+                    width: 220,
+                }, {
+                    id: "cruiserSpeed_data",
+                    header: "Крейсерская скорость",
+                    width: 220,
+                }, {
+                    id: "maxWeightCapacity_data",
+                    header: "Грузоподъемность",
+                    width: 170,
+                }, {
+                    id: "maxFlightHeight_data",
+                    header: "Максимальная высота полета",
+                    width: 250,
+                }, {
+                    id: "distance_data",
+                    header: "Дальность полета",
+                    width: 170,
+                }, {
+                    id: "fuelState_data",
+                    header: "Уровень топлива",
+                    width: 170,
+                }, {
+                    id: "airCompanyOwner_data",
+                    header: "Авиакомпания",
+                    width: 170,
+                }],
+            },
+            $$("table_scroll"));
+
         this.initRecords();
     }
 

@@ -3,6 +3,7 @@ function DetailedView() {
     this.container;
     that = {};
     that.controller;
+    let insertName = "detail_container";
 
     displayDetails = function() {
 
@@ -25,40 +26,90 @@ function DetailedView() {
     }
 
     this.updateDetail = function(id) {
-        //эта View знает, что из всех полей display_fields нужно все отображать одинаково кроме preview
-        rec = that.controller.read(id);
+        let rec = that.controller.read(id);
 
-        keys = that.controller.getDisplayKeys();
+        let elems = detail_body["rows"];
+        let keys = that.controller.getDisplayKeys();
         for (var key in keys) {
-            for (var field of this.container.childNodes) {
-                name = gattr(field, "name");
-                name = name.substring(0, name.indexOf("_data"));
-                if (name != "null")
-                    if (name == key)
-                        field.setAttribute("value", rec[key].value);
-
+            for (var elem of elems) {
+                if (elem["view"] == "text") {
+                    detail_name = elem["id"].substring(0, elem["id"].indexOf("_detail"));
+                    if (key == detail_name)
+                        elem["value"] = rec[key].value;
+                }
             }
         }
-        this.preview.setAttribute("src", "resource/" + rec["preview"].value + ".jpg");
+
+        //обновить partial view
+        this.displayDetails();
+        $$("detail_preview").config.template = "<img src='" + path + rec["preview"].value + ".jpg' style='width:225px; padding:10px'/>";
+        //$$("detail_preview").refresh();
+
     }
 
+    let detail_body = {
+        rows: [{
+            view: "label",
+            template: "№",
+        }, {
+            view: "text",
+            id: "number_detail",
+            value: "",
+        }, {
+            view: "label",
+            template: "Тип воздушного судна",
+        }, {
+            view: "text",
+            id: "type_vs_detail",
+            value: "",
+        }, {
+            view: "label",
+            template: "Техническое состояние",
+        }, {
+            view: "text",
+            id: "techstate_detail",
+            value: "",
+        }, {
+            view: "label",
+            template: "Крейсерская скорость",
+        }, {
+            view: "text",
+            id: "cruiserSpeed_detail",
+            value: "",
+        }, {
+            view: "label",
+            template: "Грузоподъемность",
+        }, {
+            view: "text",
+            id: "maxWeightCapacity_detail",
+            value: "",
+        }]
+    };
+
     this.displayDetails = function() {
-        inserted = byId("detail_container");
+        webix.ui({
+            view: "layout",
+            id: "detail_layout",
+            padding: 10,
+            rows: [{
+                id: "detail_preview",
+                template: "<img src='resource/fly_boeing.jpg' style='width:225px; padding:10px'/>",
+            }, {
+                view: "scrollview",
+                id: "detail",
+                scroll: "y",
+                body: detail_body
+            }]
+        }, $$("detail_container"));
 
-        create("div", inserted, true).attr("class", "toolbox");
-        this.preview = create("div", inserted, true).attr("class", "preview");
-        this.preview = create("img", this.preview, true).attr("src", "");
-
-        this.container = create("div", inserted, true).attr("id", "fields_container");
-
-        //заполнение содержимого детального просмотра
-        keys = that.controller.getDisplayKeys();
-        for (var key in keys) {
-            if (key != "preview") {
-                name_ = that.controller.getFieldName(key);
-                this.text_a(byId("fields_container"), name_, key + "_data");
-            }
-        }
+        //заполнение содержимого
+        //keys = that.controller.getDisplayKeys();
+        //for (var key in keys) {
+        //    if (key != "preview") {
+        //        name_ = that.controller.getFieldName(key);
+        //        this.text_a(byId("fields_container"), name_, key + "_data");
+        //    }
+        //}
     }
 
     this.text_a = function(container, text, name) {
@@ -70,8 +121,6 @@ function DetailedView() {
     }
 
     this.render = function() {
-        displayDetails();
-
         //сначала рендеринг тегов и содержимого
         this.displayDetails();
         //затем навешивание обработчиков по изменению размеров полей

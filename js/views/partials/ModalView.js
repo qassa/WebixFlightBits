@@ -1,23 +1,23 @@
 function ModalView() {
     this.table;
-    var that = {}
+    let that = {}
     that.controller;
     that.table;
     that.modalNode;
+    let insertName = "my_win";
 
     //одновременно может быть отображено только 1 модальное окно
     //функция заполнения элементами редактирования
     this.fillModal = function() {
-        var action = this.getAttribute("class");
+        let action = this.config.id;
         keys = that.controller.getDisplayKeys();
 
-        //заполнить содержимое модального окна
         if (action == "add") {
             displayElements(that.modalNode, keys);
 
             //вставка кнопки подтверждения
             create("div", that.modalNode, true).attr("id", "new_line");
-            var save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
+            let save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
             save.addEventListener("click", saveRec);
         }
         if (action == "edit") {
@@ -27,7 +27,7 @@ function ModalView() {
             editRec(lastSelect);
 
             create("div", that.modalNode, true).attr("id", "new_line");
-            var save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
+            let save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
             save.addEventListener("click", editSubmit);
         }
         if (action == "remove") {
@@ -175,23 +175,119 @@ function ModalView() {
 
     }
 
-    function modalBackground() {
-        //modal_text добавляется только при появлении модального окна, нет необходимости изменять style.display
-        byId("fon").style.display = "none";
-    }
-
     var render = function() {
+        webix.ui({
 
+            view: "window",
+            modal: true,
+            position: "center",
+            width: 751,
+            id: "my_win",
+            head: {
+                view: "button",
+                label: "Закрыть",
+                align: "right",
+                width: 70,
+                click: ("$$('my_win').hide();")
+            },
+            body: {
+                view: "layout",
+                padding: 5,
+                rows: [{
+                    cols: [{
+                        view: "label",
+                        template: "№"
+                    }, {
+                        view: "label",
+                        template: "Тип воздушного судна",
+                    }, {
+                        view: "label",
+                        template: "Превью"
+                    }],
+                }, {
+                    cols: [{
+                        view: "text",
+                        width: 200,
+                    }, {
+                        view: "text",
+                        width: 200
+                    }, {
+                        view: "button",
+                        label: "Выбрать файл...",
+                        width: 200
+                    }]
+                }, {
+                    cols: [{
+                        view: "label",
+                        template: "Техническое состояние"
+                    }, {
+                        view: "label",
+                        template: "Крейсерская скорость",
+                    }, {
+                        view: "label",
+                        template: "Грузоподъемность"
+                    }],
+                }, {
+                    cols: [{
+                        view: "text",
+                        width: 200
+                    }, {
+                        view: "text",
+                        width: 200
+                    }, {
+                        view: "text",
+                        width: 200
+                    }],
+                }, {
+                    cols: [{
+                        view: "label",
+                        template: "Максимальная высота полета"
+                    }, {
+                        view: "label",
+                        template: "Дальность полета",
+                    }, {
+                        view: "label",
+                        template: "Уровень топлива"
+                    }],
+                }, {
+                    cols: [{
+                        view: "text",
+                        width: 200
+                    }, {
+                        view: "text",
+                        width: 200
+                    }, {
+                        view: "text",
+                        width: 200
+                    }],
+                }, {
+                    cols: [{
+                        view: "label",
+                        template: "Авиакомпания"
+                    }]
+                }, {
+                    cols: [{
+                        view: "text",
+                        width: 200
+                    }]
+                }, {
+                    view: "button",
+                    label: "Сохранить",
+                    width: 95,
+                    align: "center"
+                }]
+            }
+
+        });
     }
 
     this.constructor = function() {
         View.call(this);
-        modalBackground();
         this.setController();
         that.controller = this.controller;
-        that.modalNode = byId("modal_text");
 
         render();
+        that.modalNode = $$("my_win");
     }
 
     this.constructor();
