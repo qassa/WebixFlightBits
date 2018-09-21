@@ -123,6 +123,9 @@ function TableView(modal, detail) {
                 },
                 columns: [{
                     id: "id_table",
+                    width: 50,
+                }, {
+                    //id: "id_table",
                     header: { content: "masterCheckbox", contentId: "id1" },
                     template: "{common.checkbox()}",
                     width: 50
@@ -170,7 +173,7 @@ function TableView(modal, detail) {
                 }],
             },
             $$("table_scroll"));
-
+        $$("table").hideColumn("id_table");
         this.initRecords();
     }
 

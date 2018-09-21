@@ -1,7 +1,7 @@
 window.global_id = 99;
 
 var airplane_data = [{
-        id: 1,
+        id: 0,
         number: 32,
         type_vs: "BlindJet 543",
         preview: "fly_boeing",
@@ -29,7 +29,7 @@ var airplane_data = [{
 ];
 
 var flight_data = [{
-    id: 1,
+    id: 0,
     number: 12,
     type_vs: "BlindJet 543",
     arrangement: 140,
