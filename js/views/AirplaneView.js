@@ -10,7 +10,7 @@ function AirplaneView() {
         modal = new ModalView();
 
         //отобразить детальное представление
-        detail = new DetailedView();
+        detail = new DetailedView(detail_skeleton);
 
         //отобразить табличное представление
         table = new TableView(modal, detail, table_skeleton);
@@ -78,6 +78,46 @@ function AirplaneView() {
                 }],
             },
             $$("table_scroll"));
+    }
+
+    function detail_skeleton() {
+        webix.ui({
+            view: "layout",
+            id: "detail_layout",
+            padding: 10,
+            rows: [{
+                    id: "detail_preview",
+                    height: 225,
+                    data: [{
+                        image: "<img src='resource/fly_boeing.jpg' style='width:225px; padding:10px'/>",
+                    }],
+                    template: "#image#",
+                },
+                {
+                    template: "Детальный просмотр",
+                    type: "section"
+                },
+                {
+                    view: "form",
+                    scroll: "y",
+                    id: "detail_form",
+                    elementsConfig: {
+                        labelPosition: "top",
+                    },
+                    elements: [
+                        { view: "text", label: "№", name: "number_detail" },
+                        { view: "text", label: "Тип воздушного судна", name: "type_vs_detail" },
+                        { view: "text", label: "Техническое состояние", name: "techstate_detail" },
+                        { view: "text", label: "Крейсерская скорость", name: "cruiserSpeed_detail" },
+                        { view: "text", label: "Грузоподъемность", name: "maxWeightCapacity_detail" },
+                        { view: "text", label: "Максимальная высота полета", name: "maxFlightHeight_detail" },
+                        { view: "text", label: "Дальность полета", name: "distance_detail" },
+                        { view: "text", label: "Уровень топлива", name: "fuelState_detail" },
+                        { view: "text", label: "Авиакомпания", name: "airCompanyOwner_detail" },
+                    ]
+                }
+            ]
+        }, $$("detail_container"));
     }
 
 }

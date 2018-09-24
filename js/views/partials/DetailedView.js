@@ -1,4 +1,4 @@
-function DetailedView() {
+function DetailedView(dskeleton) {
     this.preview;
     this.container;
     that = {};
@@ -15,50 +15,16 @@ function DetailedView() {
             rec[key + "_detail"] = rec[key].value;
         }
         //загрузка превью
-        $$("detail_preview").setValues({ image: "<img src='" + path + rec["preview"].value + ".jpg' style='width:225px; padding:10px'/>" });
+        if (rec["preview"] != undefined)
+            $$("detail_preview").setValues({ image: "<img src='" + path + rec["preview"].value + ".jpg' style='width:225px; padding:10px'/>" });
 
         //изменение значения полей формы
         $$("detail_form").setValues(rec);
     }
 
     this.displayDetails = function() {
-        webix.ui({
-            view: "layout",
-            id: "detail_layout",
-            padding: 10,
-            rows: [{
-                    id: "detail_preview",
-                    height: 225,
-                    data: [{
-                        image: "<img src='resource/fly_boeing.jpg' style='width:225px; padding:10px'/>",
-                    }],
-                    template: "#image#",
-                },
-                {
-                    template: "Детальный просмотр",
-                    type: "section"
-                },
-                {
-                    view: "form",
-                    scroll: "y",
-                    id: "detail_form",
-                    elementsConfig: {
-                        labelPosition: "top",
-                    },
-                    elements: [
-                        { view: "text", label: "№", name: "number_detail" },
-                        { view: "text", label: "Тип воздушного судна", name: "type_vs_detail" },
-                        { view: "text", label: "Техническое состояние", name: "techstate_detail" },
-                        { view: "text", label: "Крейсерская скорость", name: "cruiserSpeed_detail" },
-                        { view: "text", label: "Грузоподъемность", name: "maxWeightCapacity_detail" },
-                        { view: "text", label: "Максимальная высота полета", name: "maxFlightHeight_detail" },
-                        { view: "text", label: "Дальность полета", name: "distance_detail" },
-                        { view: "text", label: "Уровень топлива", name: "fuelState_detail" },
-                        { view: "text", label: "Авиакомпания", name: "airCompanyOwner_detail" },
-                    ]
-                }
-            ]
-        }, $$("detail_container"));
+        this.dskeleton();
+
     }
 
     this.render = function() {
@@ -66,13 +32,14 @@ function DetailedView() {
         this.displayDetails();
     }
 
-    this.constructor = function() {
+    this.constructor = function(dskeleton) {
         View.call(this);
         this.setController();
         that.controller = this.controller;
+        this.dskeleton = dskeleton;
 
         this.render();
     }
 
-    this.constructor();
+    this.constructor(dskeleton);
 }

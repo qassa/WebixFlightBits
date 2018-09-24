@@ -10,7 +10,7 @@ function FlightView() {
         modal = new ModalView();
 
         //отобразить детальное представление
-        detail = new DetailedView();
+        detail = new DetailedView(detail_skeleton);
 
         //отобразить табличное представление
         table = new TableView(modal, detail, table_skeleton);
@@ -42,40 +42,78 @@ function FlightView() {
                     header: "Тип воздушного судна",
                     width: 170
                 }, {
-                    id: "preview_data",
-                    template: "<img src='resource/#preview_data#.jpg' style='width:35px'/>",
-                    header: "Превью",
+                    id: "arrangement_data",
+                    header: "Компоновка",
                     width: 170
                 }, {
-                    id: "techstate_data",
-                    header: "Техническое состояние",
+                    id: "aircompany_vs_data",
+                    header: "Принадлежность ВС",
                     width: 220,
                 }, {
-                    id: "cruiserSpeed_data",
-                    header: "Крейсерская скорость",
+                    id: "commander_surname_data",
+                    header: "Фамилия командира ВС",
                     width: 220,
                 }, {
-                    id: "maxWeightCapacity_data",
-                    header: "Грузоподъемность",
+                    id: "route_data",
+                    header: "Маршрут",
                     width: 170,
                 }, {
-                    id: "maxFlightHeight_data",
-                    header: "Максимальная высота полета",
+                    id: "plan_arrive_time_data",
+                    header: "Плановое время прибытия",
                     width: 250,
                 }, {
-                    id: "distance_data",
-                    header: "Дальность полета",
+                    id: "fact_arrive_time_data",
+                    header: "Фактическое время прибытия",
                     width: 170,
                 }, {
-                    id: "fuelState_data",
-                    header: "Уровень топлива",
+                    id: "schedule_takeoff_time_data",
+                    header: "Время отправления по расписанию",
                     width: 170,
                 }, {
-                    id: "airCompanyOwner_data",
-                    header: "Авиакомпания",
+                    id: "fact_takeoff_time_data",
+                    header: "Фактическое время взлета",
+                    width: 170,
+                }, {
+                    id: "reason_of_delay_data",
+                    header: "Причина задержки",
                     width: 170,
                 }],
             },
             $$("table_scroll"));
     }
+
+    function detail_skeleton() {
+        webix.ui({
+            view: "layout",
+            id: "detail_layout",
+            padding: 10,
+            rows: [{
+                    template: "Детальный просмотр",
+                    type: "section"
+                },
+                {
+                    view: "form",
+                    scroll: "y",
+                    id: "detail_form",
+                    elementsConfig: {
+                        labelPosition: "top",
+                    },
+                    elements: [
+                        { view: "text", label: "№", name: "number_detail" },
+                        { view: "text", label: "Тип воздушного судна", name: "type_vs_detail" },
+                        { view: "text", label: "Компоновка", name: "arrangement_detail" },
+                        { view: "text", label: "Принадлежность ВС", name: "aircompany_vs_detail" },
+                        { view: "text", label: "Фамилия командира ВС", name: "commander_surname_detail" },
+                        { view: "text", label: "Маршрут", name: "route_detail" },
+                        { view: "text", label: "Плановое время прибытия", name: "plan_arrive_time_detail" },
+                        { view: "text", label: "Фактическое время прибытия", name: "fact_arrive_time_detail" },
+                        { view: "text", label: "Время отправления по расписанию", name: "schedule_takeoff_time_detail" },
+                        { view: "text", label: "Фактическое время взлета", name: "fact_takeoff_time_detail" },
+                        { view: "text", label: "Причина задержки", name: "reason_of_delay_detail" },
+                    ]
+                }
+            ]
+        }, $$("detail_container"));
+    }
+
 }
