@@ -55,9 +55,8 @@ function AirplaneController(context, concreteView) {
         record = this.model.create(record);
 
         //оповещение View о новой записи
-        this.view.table.newHighlightTr();
         record = this.model.read(record.id);
-        this.view.table.addRecord(record, this.view.table.tr1);
+        this.view.table.addRecord(record);
     }
 
     this.update = function(record) {

@@ -5,6 +5,7 @@ function ModalView() {
     that.table;
     that.modalNode;
     let insertName = "my_win";
+    let modalEvent;
 
     //одновременно может быть отображено только 1 модальное окно
     //функция заполнения элементами редактирования
@@ -13,90 +14,80 @@ function ModalView() {
         keys = that.controller.getDisplayKeys();
 
         if (action == "add") {
-            displayElements(that.modalNode, keys);
+            displayElements();
 
-            //вставка кнопки подтверждения
-            create("div", that.modalNode, true).attr("id", "new_line");
-            let save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
-            save.addEventListener("click", saveRec);
+            //обработчик события
+            modalEvent = $$("modal_save").attachEvent("onItemClick", saveRec);
         }
         if (action == "edit") {
-            displayElements(that.modalNode, keys);
-            //заполнение модели данными из TablePartialView
-            //dataToElements(modalNode);
-            editRec(lastSelect);
+            //проверить, выделена ли строка
+            if ($$("table").getSelectedItem() == undefined) {
+                webix.message({
+                    type: "debug",
+                    text: "Не выбрана строка для редактирования",
+                    expire: 2000
+                })
+            } else {
+                displayElements();
+                modalEvent = $$("modal_save").attachEvent("onItemClick", editSubmit);
 
-            create("div", that.modalNode, true).attr("id", "new_line");
-            let save = create("input", that.modalNode, true).attr("type", "button", true).attr("class", "save_button", true).attr("value", "Сохранить");
-            save.addEventListener("click", editSubmit);
+                editRec();
+            }
         }
         if (action == "remove") {
             //вывод окна подтверждения
             confirmRemove(that.modalNode);
         }
-
-        //навесить обработчик нажатия на закрытие окна 1 раз
-        modalClose = byId("close_modal");
-        modalClose.addEventListener('click', function() {
-            that.modalNode.style.display = "none";
-            (byId("fon")).style.display = "none";
-            //удалить содержимое
-            while (that.modalNode.firstChild) {
-                that.modalNode.removeChild(that.modalNode.firstChild);
-            }
-        });
-
-        //отобразить окно
-        that.modalNode.style.display = "block";
-        byId("fon").style.display = "block";
-
-        modalCoords();
     }
 
-    editRec = function(id) {
+    closeModal = function() {
+        //отвязка обработчика события
+        $$("modal_save").detachEvent(modalEvent);
+        //сброс содержимого формы
+        $$("modal_form").clear();
+        $$("modal_button").define("label", "Выбрать файл...");
+        $$("modal_button").refresh();
+        //сокрытие формы
+        $$('my_win').hide();
+    }
+
+    editRec = function() {
+        let id = lastSelect;
         if (id != -1) {
             rec = that.controller.read(id);
+            record = {};
 
-            keys = that.controller.getDisplayKeys();
-            for (var key in keys) {
-                for (var field of that.modalNode.childNodes) {
-                    if (field.childNodes.length > 0)
-                        for (var input of field.childNodes)
-                            if (input.tagName == "INPUT" && input.type == "text") {
-                                name = gattr(input, "name");
-                                name = name.substring(0, name.indexOf("_edit"));
-                                if (name != "null")
-                                    if (name == key)
-                                        input.setAttribute("value", rec[key].value);
-                            }
-                }
+            for (var key in rec) {
+                record[key + "_edit"] = rec[key].value;
             }
+
+            $$("modal_form").setValues(record);
         }
     }
 
     extractData = function() {
-        var elems = that.modalNode.getElementsByTagName("INPUT");
-        max = elems.length;
-        for (i = 0; i < max; i++) {
-            elem = elems[i];
-            if (elem.getAttribute("type") == "text")
-            //убрать edit в имени элемента
-                name = elem.getAttribute("name");
-            begin = name.indexOf("_edit");
-            name = name.substring(0, name.length - (name.length - begin));
-            record[name] = elem.value;
+        let record = {};
+        let fields = $$("modal_form").getValues();
+        for (var field in fields) {
+            //
+            if (field != "id") {
+                //
+                begin = field.indexOf("_edit");
+                name = field.substring(0, field.length - (field.length - begin));
+                record[name] = fields[field];
+            }
         }
+        return record;
     }
 
     editSubmit = function() {
-        record = {};
-
-        extractData();
-        record["id"] = lastSelect;
+        let record = extractData();
 
         record = that.controller.update(record);
         //обновить запись в таблице
         that.table.updateRecord(record);
+
+        closeModal();
     }
 
     this.setTable = function(obj) {
@@ -105,74 +96,15 @@ function ModalView() {
     }
 
     function saveRec() {
-        record = {};
-
-        extractData();
+        let record = extractData();
         that.controller.create(record);
+
+        closeModal();
     }
 
-    function displayElements(modalNode, keys) {
-        renderCloseButton(modalNode);
-
+    function displayElements() {
         //rendering элементов ввода данных
-        var position = 0,
-            i = 0;
-
-        for (var elem in keys) {
-            var edit_value = create("div", modalNode, true).attr("class", "edit_field", true).inH(keys[elem].name + "<br>", false);
-            var input;
-            if (keys[elem].type == "text" || keys[elem].type == "numeric")
-                input = create("input", edit_value, true).attr("type", "text", true).attr("name", elem + "_edit", false);
-
-            if (keys[elem].type == "image") {
-                input = create("input", edit_value, true).attr("type", "button", true).attr("value", "Выбрать файл...", true).attr("name", elem + "_edit", false);
-            }
-            i++;
-
-            //в каждой строке расположены по 3 элемента редактирования
-            position++;
-            if (position >= 3) {
-                //перенос на строку
-                position = 0;
-                create("div", modalNode, true).attr("id", "new_line");
-            }
-        }
-    }
-
-    function renderCloseButton(modalNode) {
-        //rendering кнопки закрытия Popup
-        var div = document.createElement("div");
-        div.setAttribute("id", "close_modal");
-        modalNode.appendChild(div);
-        var img = document.createElement("img");
-        img.setAttribute("src", "resource/close_modal.png");
-        div.appendChild(img);
-    }
-
-    //перерасчет координат левого верхнего угла для блока modal_text
-    function modalCoords() {
-        //найти блок с данными, определить его ширину
-        modalWidth = that.modalNode.clientWidth;
-        modalHeight = that.modalNode.clientHeight;
-        //взять ширину доступную для отбражения в окне браузера
-        windowWidth = window.innerWidth;
-        windowHeight = window.innerHeight;
-
-        //определить координаты левой верхней точки
-        that.modalNode.style.left = (windowWidth / 2) - (modalWidth / 2);
-        that.modalNode.style.top = (windowHeight / 2) - (modalHeight / 2);
-
-        modalWidth = that.modalNode.clientWidth;
-
-        //установить положение для элемента close_modal
-        modalClose = byId("close_modal");
-        modalClose.style.left = modalWidth - 30;
-    }
-
-    function confirmRemove(modalNode) {
-        renderCloseButton(modalNode);
-
-
+        $$('my_win').show();
     }
 
     var render = function() {
@@ -188,93 +120,60 @@ function ModalView() {
                 label: "Закрыть",
                 align: "right",
                 width: 70,
-                click: ("$$('my_win').hide();")
+                click: closeModal
             },
             body: {
-                view: "layout",
+                view: "form",
                 padding: 5,
-                rows: [{
-                    cols: [{
-                        view: "label",
-                        template: "№"
+                id: "modal_form",
+                elementsConfig: {
+                    labelPosition: "top",
+                },
+                elements: [{
+                    rows: [{
+                        cols: [
+                            { view: "text", label: "№", name: "number_edit" },
+                            { view: "text", label: "Тип воздушного судна", name: "type_vs_edit" },
+                            {
+                                rows: [{
+                                        view: "label",
+                                        template: "Миниатюра судна",
+                                    },
+                                    {
+                                        id: "modal_button",
+                                        view: "button",
+                                        label: "Выбрать файл...",
+                                        height: 30,
+                                        name: "preview_edit"
+                                    }
+                                ]
+                            }
+                        ],
                     }, {
-                        view: "label",
-                        template: "Тип воздушного судна",
+                        cols: [
+                            { view: "text", label: "Техническое состояние", name: "techstate_edit" },
+                            { view: "text", label: "Крейсерская скорость", name: "cruiserSpeed_edit" },
+                            { view: "text", label: "Грузоподъемность", name: "maxWeightCapacity_edit" },
+                        ],
                     }, {
-                        view: "label",
-                        template: "Превью"
-                    }],
-                }, {
-                    cols: [{
-                        view: "text",
-                        width: 200,
+                        cols: [
+                            { view: "text", label: "Максимальная высота полета", name: "maxFlightHeight_edit" },
+                            { view: "text", label: "Дальность полета", name: "distance_edit" },
+                            { view: "text", label: "Уровень топлива", name: "fuelState_edit" },
+                        ],
                     }, {
-                        view: "text",
-                        width: 200
+                        cols: [
+                            { view: "text", label: "Авиакомпания", name: "airCompanyOwner_edit" }, {}, {}
+                        ],
                     }, {
-                        view: "button",
-                        label: "Выбрать файл...",
-                        width: 200
+                        cols: [{}, {
+                            id: "modal_save",
+                            view: "button",
+                            label: "Сохранить",
+                            width: 95,
+                            align: "center"
+                        }, {}],
                     }]
-                }, {
-                    cols: [{
-                        view: "label",
-                        template: "Техническое состояние"
-                    }, {
-                        view: "label",
-                        template: "Крейсерская скорость",
-                    }, {
-                        view: "label",
-                        template: "Грузоподъемность"
-                    }],
-                }, {
-                    cols: [{
-                        view: "text",
-                        width: 200
-                    }, {
-                        view: "text",
-                        width: 200
-                    }, {
-                        view: "text",
-                        width: 200
-                    }],
-                }, {
-                    cols: [{
-                        view: "label",
-                        template: "Максимальная высота полета"
-                    }, {
-                        view: "label",
-                        template: "Дальность полета",
-                    }, {
-                        view: "label",
-                        template: "Уровень топлива"
-                    }],
-                }, {
-                    cols: [{
-                        view: "text",
-                        width: 200
-                    }, {
-                        view: "text",
-                        width: 200
-                    }, {
-                        view: "text",
-                        width: 200
-                    }],
-                }, {
-                    cols: [{
-                        view: "label",
-                        template: "Авиакомпания"
-                    }]
-                }, {
-                    cols: [{
-                        view: "text",
-                        width: 200
-                    }]
-                }, {
-                    view: "button",
-                    label: "Сохранить",
-                    width: 95,
-                    align: "center"
                 }]
             }
 

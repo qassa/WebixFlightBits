@@ -16,7 +16,6 @@ function DetailedView() {
         }
         //загрузка превью
         $$("detail_preview").setValues({ image: "<img src='" + path + rec["preview"].value + ".jpg' style='width:225px; padding:10px'/>" });
-        //$$("detail_preview").refresh();
 
         //изменение значения полей формы
         $$("detail_form").setValues(rec);
@@ -39,10 +38,6 @@ function DetailedView() {
                     template: "Детальный просмотр",
                     type: "section"
                 },
-                //view: "scrollview",
-                //id: "detail",
-                //scroll: "y",
-                //body: detail_body
                 {
                     view: "form",
                     scroll: "y",

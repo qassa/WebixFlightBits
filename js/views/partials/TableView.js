@@ -1,6 +1,6 @@
-function TableView(modal, detail) {
+function TableView(modal, detail, tskeleton) {
     let marked = [];
-    this.modal;
+    //this.modal;
     let that = {};
     //that означает, что функцияи вызываются с изменынным контекстом this 
     that.controller;
@@ -10,23 +10,24 @@ function TableView(modal, detail) {
     let insertTable = "table";
     let insertTools = "tools";
 
-    tools = [{
-        id: "add",
-        label: "Добавить",
-        image: path + "add.png",
-        click: ("$$('my_win').show();"),
-    }, {
-        id: "edit",
-        label: "Изменить",
-        image: path + "edit.png",
-    }, {
-        id: "remove",
-        label: "Удалить",
-        image: path + "remove.png",
-    }]
-
     function initTools() {
         //отображение элементов с webix
+        tools = [{
+            id: "add",
+            label: "Добавить",
+            image: path + "add.png",
+            click: this.modal.fillModal,
+        }, {
+            id: "edit",
+            label: "Изменить",
+            image: path + "edit.png",
+            click: this.modal.fillModal,
+        }, {
+            id: "remove",
+            label: "Удалить",
+            image: path + "remove.png",
+            click: deleteRecs,
+        }];
 
         renderObj = {
             cols: []
@@ -54,10 +55,13 @@ function TableView(modal, detail) {
 
     trSelected = function() {
         let item = $$(insertTable).getSelectedItem();
-        lastSelect = item["id_table"];
+        //только в случае, если элемент выбран
+        if (item != undefined) {
+            lastSelect = item["id_table"];
 
-        //обновление детального просмотра (если имеется)
-        that.detail.updateDetail(lastSelect);
+            //обновление детального просмотра (если имеется)
+            that.detail.updateDetail(lastSelect);
+        }
     }
 
     this.initRecords = function() {
@@ -84,151 +88,75 @@ function TableView(modal, detail) {
     }
 
     this.updateRecord = function(record) {
-        //найти запись с заданным id
-        id = record.id.value.toString();
-        tr = document.getElementById(id);
+        let id = $$(insertTable).getSelectedId();
+        let item = {};
+        for (var key in record) {
+            if (key == "id")
+                item[key + "_table"] = record[key].value;
+            else
+                item[key + "_data"] = record[key].value;
+        }
 
-        //повторно вставить в то же место документа новую строку
-        tr1 = that.table.insertBefore(document.createElement("tr"), tr);
-        tr1.addEventListener('click', trSelected);
-        this.addRecord(record, tr1);
-
-        //удалить строку
-        tr.remove();
-
-        //обновить выделение строки (строка только что редактировалась)
-        simulateClick(tr1);
+        $$(insertTable).updateItem(id.row, item);
     }
-
-    var simulateClick = function(elem) {
-        // Create our event (with options)
-        //var evt = new MouseEvent('click', {
-        //    bubbles: false,
-        //    cancelable: true,
-        //    view: window
-        //);
-        // If cancelled, don't dispatch our event
-        //var canceled = !elem.dispatchEvent(evt);
-    };
 
     this.initTableContent = function() {
         //заполнить таблицу элементом tableview
-        webix.ui({
-                view: "datatable",
-                id: "table",
-                select: "row",
-                resizeColumn: true,
-                on: {
-                    onSelectChange: trSelected
-                },
-                columns: [{
-                    id: "id_table",
-                    width: 50,
-                }, {
-                    //id: "id_table",
-                    header: { content: "masterCheckbox", contentId: "id1" },
-                    template: "{common.checkbox()}",
-                    width: 50
-                }, {
-                    id: "number_data",
-                    header: "№",
-                    //width: 150
-                }, {
-                    id: "type_vs_data",
-                    header: "Тип воздушного судна",
-                    width: 170
-                }, {
-                    id: "preview_data",
-                    template: "<img src='resource/#preview_data#.jpg' style='width:35px'/>",
-                    header: "Превью",
-                    width: 170
-                }, {
-                    id: "techstate_data",
-                    header: "Техническое состояние",
-                    width: 220,
-                }, {
-                    id: "cruiserSpeed_data",
-                    header: "Крейсерская скорость",
-                    width: 220,
-                }, {
-                    id: "maxWeightCapacity_data",
-                    header: "Грузоподъемность",
-                    width: 170,
-                }, {
-                    id: "maxFlightHeight_data",
-                    header: "Максимальная высота полета",
-                    width: 250,
-                }, {
-                    id: "distance_data",
-                    header: "Дальность полета",
-                    width: 170,
-                }, {
-                    id: "fuelState_data",
-                    header: "Уровень топлива",
-                    width: 170,
-                }, {
-                    id: "airCompanyOwner_data",
-                    header: "Авиакомпания",
-                    width: 170,
-                }],
-            },
-            $$("table_scroll"));
+        //tableview контекстозависим
+        this.tskeleton();
+
+        //инициализация обработчиков (методы обработчиков находятся в TableView)
+        $$("table").attachEvent("onCheck", function(id, column, state) {
+            markRecord(id, column, state)
+        });
+        $$("table").attachEvent("onSelectChange", trSelected);
+
+        //хайд колонки, содержащей id записей из БД
         $$("table").hideColumn("id_table");
         this.initRecords();
     }
 
     //пользователь может отметить на удаление либо редактирование любую строку
-    function markRecord() {
-        id = this.parentNode.parentNode.getAttribute("id");
-        if (this.checked)
+    function markRecord(id, foo, state) {
+        id = $$(insertTable).getItem(id).id_table;
+        //state == "checked"
+        if (state == 1)
             marked.push(id);
         else
             marked.splice(marked.indexOf(id), 1);
     }
 
-    function markRecords() {
-        checked = this.checked;
+    deleteRec = function() {
 
-        nodes = getTableNodes();
-        nodes.forEach(function(child) {
-            if (child.nodeName == "INPUT" && child.getAttribute("name") == "select_single") {
-                child.checked = checked;
-                if (checked) {
-                    marked.push(child.parentNode.parentNode.getAttribute("id"));
-                } else {
-                    marked = [];
-                }
-            }
-        });
-    }
-
-    function getTableNodes() {
-        nodes = [];
-        for (var row of that.table.rows) {
-            for (var cell of row.childNodes) {
-                for (var child of cell.childNodes)
-                    nodes.push(child);
-            }
-        }
-        return nodes;
     }
 
     function deleteRecs() {
-        for (var mark of marked) {
-            that.controller.delete(mark);
-        }
+        if (marked.length == 0)
+            webix.message({
+                type: "debug",
+                text: "Не выбрана строка(ки) для удаления",
+                expire: 2000
+            });
+        else
+            for (; marked.length > 0;) {
+                that.controller.delete(marked[0]);
+            }
     }
 
     this.deletedEvent = function(id) {
-        for (var row of byTg("tr")) {
-            if (row.getAttribute("id") == id) {
-                row.remove();
-                marked.splice(marked.indexOf(id), 1);
-                //повторный вызов
-                deleteRecs();
-                return;
+        //получить отмеченные checkbox из datatable
+        //уже выполнено в markRecord
+        let rows = $$(insertTable).serialize();
+
+        for (var dat of rows) {
+            if (id == dat.id_table) {
+                $$(insertTable).remove(dat.id);
+                break;
             }
         }
+        $$(insertTable).refresh();
+
+        marked.splice(marked.indexOf(id), 1);
     }
 
     function deleteTable() {
@@ -245,17 +173,18 @@ function TableView(modal, detail) {
         this.initTableContent();
     };
 
-    this.constructor = function(modal, detail) {
+    this.constructor = function(modal, detail, tskeleton) {
         View.call(this);
         this.setController();
         that.controller = this.controller;
         this.modal = modal;
         that.detail = detail;
+        this.tskeleton = tskeleton;
 
         modal.setTable(this);
 
         this.render();
     };
 
-    this.constructor(modal, detail);
+    this.constructor(modal, detail, tskeleton);
 }
